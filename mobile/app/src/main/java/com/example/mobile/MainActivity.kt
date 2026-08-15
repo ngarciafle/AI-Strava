@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,6 +42,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MobileApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+    var tracing: Boolean = false
+
+    fun toggleTracing() {
+        tracing = !tracing
+    }
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -64,6 +70,9 @@ fun MobileApp() {
                 name = "Android",
                 modifier = Modifier.padding(innerPadding)
             )
+
+            StartGPS(tracing, { toggleTracing() })
+
         }
     }
 }
@@ -80,9 +89,22 @@ enum class AppDestinations(
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
+        text = "Hello $name! \nPlease enable location",
         modifier = modifier
     )
+}
+
+@Composable
+fun StartGPS(isActive: Boolean, onToggle: () -> Unit) {
+    Button(
+        onClick = {
+            onToggle()
+        }
+    ) {
+        Text(
+            if (isActive) "Stop" else "Start"
+        )
+    }
 }
 
 @Preview(showBackground = true)
