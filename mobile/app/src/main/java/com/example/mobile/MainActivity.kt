@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import com.example.mobile.ui.theme.MobileTheme
+import com.example.mobile.TrainingScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,11 +43,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MobileApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
-    var tracing: Boolean = false
-
-    fun toggleTracing() {
-        tracing = !tracing
-    }
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -71,7 +67,6 @@ fun MobileApp() {
                 modifier = Modifier.padding(innerPadding)
             )
 
-            StartGPS(tracing, { toggleTracing() })
         }
     }
 }
@@ -93,18 +88,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Composable
-fun StartGPS(isActive: Boolean, onToggle: () -> Unit) {
-    Button(
-        onClick = {
-            onToggle()
-        }
-    ) {
-        Text(
-            if (isActive) "Stop" else "Start"
-        )
-    }
-}
+
 
 @Preview(showBackground = true)
 @Composable
