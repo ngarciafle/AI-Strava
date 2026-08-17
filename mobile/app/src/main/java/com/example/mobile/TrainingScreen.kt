@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -33,38 +35,44 @@ import com.example.mobile.ui.theme.MobileTheme
 
 @Composable
 fun TrainingScreen() {
-    var tracing: Boolean = false
-    var stopped: Boolean = false
+    var tracing by remember { mutableStateOf(false) }
+    var stopped by remember { mutableStateOf(false) }
 
     fun toggleTracing() {
         tracing = !tracing
     }
 
-    StartGPS(tracing, stopped, { toggleTracing() })
+    fun stopTraining() {
+        stopped = false
+        // stop -> send data to db...
+        // change UI
+    }
+
+    StartGPS(tracing, stopped, { toggleTracing() }, { stopTraining() })
 
 }
 
 
 @Composable
-fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit) {
+fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit, stopActivity: () -> Unit) {
 
     if (isActive) {
         Button(
             onClick = {
                 onToggle()
             },
-            modifier = Modifier.border(4.dp, Color.Red).width(10.dp)
+            modifier = Modifier.border(4.dp, Color.Red).width(50.dp).height(50.dp)
         ) {
             Text(
                 "Stop"
             )
         }
-    } else if (!isActive && !isStopped) {
+    } else if (!isStopped) {
         Button(
             onClick = {
                 onToggle()
             },
-            modifier = Modifier.border(4.dp, Color.Green).width(10.dp)
+            modifier = Modifier.border(4.dp, Color.Green).width(50.dp).height(50.dp)
         ) {
             Text(
                 "Start"
@@ -76,7 +84,7 @@ fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit) {
                 onClick = {
                     onToggle()
                 },
-                modifier = Modifier.border(4.dp, Color.Green).width(10.dp)
+                modifier = Modifier.border(4.dp, Color.Green).width(50.dp).height(50.dp)
             ) {
                 Text(
                     "Restart"
@@ -84,9 +92,9 @@ fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit) {
             }
             Button(
                 onClick = {
-                    onToggle()
+                    stopActivity()
                 },
-                modifier = Modifier.border(4.dp, Color.Gray).width(10.dp)
+                modifier = Modifier.border(4.dp, Color.Gray).width(50.dp).height(50.dp)
             ) {
                 Text(
                     "End"
