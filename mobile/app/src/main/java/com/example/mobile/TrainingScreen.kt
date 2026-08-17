@@ -5,8 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
@@ -22,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
@@ -50,7 +53,7 @@ fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit) {
             onClick = {
                 onToggle()
             },
-            modifier = Modifier.border(4.dp, Color.red).width(10.dp)
+            modifier = Modifier.border(4.dp, Color.Red).width(10.dp)
         ) {
             Text(
                 "Stop"
@@ -61,7 +64,7 @@ fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit) {
             onClick = {
                 onToggle()
             },
-            modifier = Modifier.border(4.dp, Color.green).width(10.dp)
+            modifier = Modifier.border(4.dp, Color.Green).width(10.dp)
         ) {
             Text(
                 "Start"
@@ -73,7 +76,7 @@ fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit) {
                 onClick = {
                     onToggle()
                 },
-                modifier = Modifier.border(4.dp, Color.green).width(10.dp)
+                modifier = Modifier.border(4.dp, Color.Green).width(10.dp)
             ) {
                 Text(
                     "Restart"
@@ -83,7 +86,7 @@ fun StartGPS(isActive: Boolean, isStopped: Boolean, onToggle: () -> Unit) {
                 onClick = {
                     onToggle()
                 },
-                modifier = Modifier.border(4.dp, Color.gray).width(10.dp)
+                modifier = Modifier.border(4.dp, Color.Gray).width(10.dp)
             ) {
                 Text(
                     "End"
