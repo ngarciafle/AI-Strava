@@ -1,0 +1,10 @@
+C:\Users\Nico\Proyectos\AI-Strava\backend\target\debug\deps\zerovec_derive-e02eb4b5e875290c.d: C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\lib.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\make_ule.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\make_varule.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\ule.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\utils.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\varule.rs
+
+C:\Users\Nico\Proyectos\AI-Strava\backend\target\debug\deps\zerovec_derive-e02eb4b5e875290c.dll: C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\lib.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\make_ule.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\make_varule.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\ule.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\utils.rs C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\varule.rs
+
+C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\lib.rs:
+C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\make_ule.rs:
+C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\make_varule.rs:
+C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\ule.rs:
+C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\utils.rs:
+C:\Users\Nico\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerovec-derive-0.11.5\src\varule.rs:
