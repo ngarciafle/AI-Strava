@@ -43,11 +43,23 @@ class MainActivity : ComponentActivity() {
 @PreviewScreenSizes
 @Composable
 fun MobileApp() {
+
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+
+    fun returnHome() {
+        currentDestination = AppDestinations.HOME
+    }
+
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
-            AppDestinations.entries.forEach {
+            val destinationsToShow = if (currentDestination.label == "Record") {
+                emptyList()
+            } else {
+                AppDestinations.entries
+            }
+
+            destinationsToShow.forEach {
                 item(
                     icon = {
                         Icon(
@@ -62,18 +74,22 @@ fun MobileApp() {
             }
         }
     ) {
-        if (currentDestination.label == "Home") {
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                Greeting(
-                    name = "Android",
-                    modifier = Modifier.padding(innerPadding)
-                )
+        when (currentDestination.label) {
+            "Home" -> {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    Greeting(
+                        name = "Android",
+                        modifier = Modifier.padding(innerPadding)
+                    )
 
+                }
             }
-        } else if (currentDestination.label == "Record") {
-            TrainingScreen()
-        } else {
-            Account()
+            "Record" -> {
+                TrainingScreen({ returnHome() })
+            }
+            else -> {
+                Account()
+            }
         }
     }
 }
