@@ -47,6 +47,7 @@ fun MobileApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
 
     fun returnHome() {
+        // would be nice to redirect to the feed -> the new training posted
         currentDestination = AppDestinations.HOME
     }
 

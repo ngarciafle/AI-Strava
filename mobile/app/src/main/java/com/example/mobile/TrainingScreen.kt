@@ -37,9 +37,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.example.mobile.ui.theme.MobileTheme
+import android.annotation.SuppressLint
+import android.content.Context
+import android.os.Looper
+import com.google.android.gms.location.*
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun TrainingScreen(returnHome: () -> Unit) {
+    val context = LocalContext.current
+
+    val controlGPS = remember { ControlGPS(context) }
     var tracing by remember { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
 
@@ -137,5 +145,17 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
             }
         }
     }
+}
 
+class ControlGPS(context: Context) {
+    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+
+    fun init() {
+
+    }
+
+    fun stop() {
+        
+    }
 }
