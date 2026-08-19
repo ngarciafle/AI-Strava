@@ -1,5 +1,6 @@
 package com.example.mobile
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -40,8 +41,10 @@ import com.example.mobile.ui.theme.MobileTheme
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Looper
+import androidx.annotation.RequiresPermission
 import com.google.android.gms.location.*
 import androidx.compose.ui.platform.LocalContext
+import uniffi.rust_motor.register_new_point
 
 @Composable
 fun TrainingScreen(returnHome: () -> Unit) {
@@ -68,14 +71,16 @@ fun TrainingScreen(returnHome: () -> Unit) {
 
         Row(modifier = Modifier.align(Alignment.BottomCenter)) {
 
-            StartGPS(tracing, paused, { toggleTracing() }, { stopTraining() }, { returnHome() })
+            StartGPS(tracing, paused, { toggleTracing() }, { stopTraining() }, { returnHome() }, context)
         }
     }
 }
 
 
 @Composable
-fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stopActivity: () -> Unit, returnHome: () -> Unit) {
+fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stopActivity: () -> Unit, returnHome: () -> Unit, context: Context) {
+    val newTraining: ControlGPS = remember { ControlGPS(context) }
+
 
     if (isActive && !isPaused) {
         Button(
@@ -97,7 +102,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
     } else if (!isPaused) {
         Button(
             onClick = {
-                endTraining()
+                endTraining();
             },
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -149,13 +154,37 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
 
 class ControlGPS(context: Context) {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+    private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L).build()
 
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            for (location in locationResult.locations) {
+                if (location.accuracy < 20f) {
+                    println("New point: ${location.latitude}")
+                }
+            }
+        }
+    }
 
+    // Need to check permission of ACCESS <- ** need to look into
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     fun init() {
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            Looper.getMainLooper()
+        )
+    }
 
+    fun end() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     fun stop() {
-        
+
+    }
+
+    fun restart() {
+
     }
 }
