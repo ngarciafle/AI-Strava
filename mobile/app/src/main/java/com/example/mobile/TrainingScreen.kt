@@ -107,6 +107,8 @@ fun TrainingScreen(returnHome: () -> Unit) {
 
 
 @Composable
+//Temporal ;)
+@SuppressLint("MissingPermission")
 fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stopActivity: () -> Unit, returnHome: () -> Unit, context: Context) {
     val newTraining: ControlGPS = remember { ControlGPS(context) }
 
@@ -148,7 +150,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
         Row {
             Button(
                 onClick = {
-                    stopActivity()
+                    stopActivity(); newTraining.init()
                 },
                 modifier = Modifier.weight(0.4f).padding(10.dp,0.dp,4.dp, 0.dp),
                 shape = RoundedCornerShape(16.dp)            ) {
@@ -163,7 +165,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
             }
             Button(
                 onClick = {
-                    returnHome()
+                    returnHome(); newTraining.end()
                 },
                 modifier = Modifier.weight(0.4f).padding(4.dp,0.dp,10.dp, 0.dp),
                 shape = RoundedCornerShape(16.dp)            ) {
@@ -173,7 +175,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
                         Icons.Rounded.Stop, "Stop"
                     )
                     Text(
-                        "Stop"
+                        "End"
                     )
                 }
             }
