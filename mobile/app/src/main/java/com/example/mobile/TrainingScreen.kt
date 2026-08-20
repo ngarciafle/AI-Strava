@@ -44,11 +44,39 @@ import android.os.Looper
 import androidx.annotation.RequiresPermission
 import com.google.android.gms.location.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 //import uniffi.rust_motor.register_new_point
 // need to compile code also
 
 @Composable
 fun TrainingScreen(returnHome: () -> Unit) {
+    val permissionAsker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        permission ->
+        val permissionExact = permission[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val permissionAprox = permission[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (permissionExact || permissionAprox) {
+            print("User gives permission")
+        } else {
+            print("User doesn't give permission")
+            returnHome()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        permissionAsker.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
+
     val context = LocalContext.current
 
     val controlGPS = remember { ControlGPS(context) }
@@ -86,7 +114,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
     if (isActive && !isPaused) {
         Button(
             onClick = {
-                stopActivity()
+                stopActivity(); newTraining.stop()
             },
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -103,7 +131,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
     } else if (!isPaused) {
         Button(
             onClick = {
-                endTraining();
+                endTraining(); newTraining.init()
             },
             shape = RoundedCornerShape(16.dp)
         ) {
