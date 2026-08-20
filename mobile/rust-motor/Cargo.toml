@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
 
 [dependencies]
 uniffi = "0.32.0"
 
 [build-dependencies]
-uniffi_build = "0.32.0"
+uniffi_build = { version = "0.32.0", features = ["build"]}
