@@ -1,3 +1,5 @@
+import com.nishtahir.CargoExtension
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -10,6 +12,8 @@ android {
     compileSdk {
         version = release(36)
     }
+
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.example.mobile"
@@ -61,6 +65,12 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation("com.google.android.gms:play-services-location:21.4.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("net.java.dev.jna:jna:5.19.1@aar")
+}
+
+extensions.configure<CargoExtension> {
+    module = "../rust-motor"  // Revisa si es "../rust-motor" o "./rust-motor" según tu estructura de carpetas
+    libname = "rust_motor"
+    targets = listOf("arm", "arm64", "x86_64")
 }

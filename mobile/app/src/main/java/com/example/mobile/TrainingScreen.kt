@@ -44,7 +44,8 @@ import android.os.Looper
 import androidx.annotation.RequiresPermission
 import com.google.android.gms.location.*
 import androidx.compose.ui.platform.LocalContext
-import uniffi.rust_motor.register_new_point
+//import uniffi.rust_motor.register_new_point
+// need to compile code also
 
 @Composable
 fun TrainingScreen(returnHome: () -> Unit) {
@@ -177,14 +178,12 @@ class ControlGPS(context: Context) {
     }
 
     fun end() {
+        // Send to rust the order to end all and change UI
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     fun stop() {
-
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
-    fun restart() {
-
-    }
 }
