@@ -1,0 +1,10 @@
+[package]
+name = "rust_motor"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+uniffi = { version = "0.32.0", features = ["cli"] }
