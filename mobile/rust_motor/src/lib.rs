@@ -1,9 +1,9 @@
+use std::sync::Mutex;
+
 uniffi::setup_scaffolding!();
 
 //IDEAS
 //Implement the ability to create phases to restart rithm
-
-
 
 #[derive(uniffi::Object)]
 struct Point {
@@ -12,8 +12,18 @@ struct Point {
     altitude: f64,
 }
 
-#[derive(uniffi::Object)]
+#[derive(uniffi::Record)]
 struct StatsTraining {
+    distance: f64,
+    elevation_gain: f64,
+    elevation_loss: f64,
+    rithm: f64,
+    time: f64,
+    rithms: Vec<f64>,
+}
+
+struct TrainingState {
+    vec_points: Vec<Point>,
     distance: f64,
     elevation_gain: f64,
     elevation_loss: f64,
@@ -24,13 +34,7 @@ struct StatsTraining {
 
 #[derive(uniffi::Object)]
 struct Training {
-    vec_points: Vec<Point>,
-    distance: f64,
-    elevation_gain: f64,
-    elevation_loss: f64,
-    rithm: f64,
-    time: f64,
-    rithms: Vec<f64>,
+    state: Mutex<TrainingState>,
 }
 
 impl Training {
@@ -71,61 +75,72 @@ impl Training {
     #[uniffi::constructor]
     pub fn new() -> Self {
         Training {
-            vec_points: Vec::new(),
-            distance: 0.0,
-            elevation_gain: 0.0,
-            elevation_loss: 0.0,
-            rithm: 0.0,
-            time: 0.0,
-            rithms: Vec::new(),
+            state: Mutex::new(TrainingState {
+                vec_points: Vec::new(),
+                distance: 0.0,
+                elevation_gain: 0.0,
+                elevation_loss: 0.0,
+                rithm: 0.0,
+                time: 0.0,
+                rithms: Vec::new(),
+            })
         }
     }
 
-    pub fn register_new_point(&mut self, latitude: f64, longitude: f64, altitude: f64, time: f64) -> StatsTraining {
-        self.vec_points.push(Point {
+    pub fn register_new_point(&self, latitude: f64, longitude: f64, altitude: f64, time: f64) -> StatsTraining {
+        let mut state = self.state.lock().unwrap();
+
+        state.vec_points.push(Point {
             latitude,
             longitude,
             altitude,
         });
 
-        let last_point = match self.vec_points.last() {
-            Some(point) => point,
+        let last_point = match state.vec_points.last() {
+            Some(point) => Some((point.latitude, point.longitude, point.altitude)),
             None => return StatsTraining { distance: 0.0, elevation_gain: 0.0, elevation_loss: 0.0, rithm: 0.0, time: 0.0, rithms: Vec::new() },
-        };    
+        };  
+
+        if let Some((last_lat, last_lon, last_alt)) = last_point {
+            let distance = Self::calc_dist(
+                last_lat,
+                last_lon,
+                latitude,
+                longitude,
+            );    
+            state.distance += distance;
+
+            (state.elevation_gain, state.elevation_loss) = Self::calc_elevation_gain_loss(
+                last_alt,
+                altitude,
+            );    
+        }
         
-        self.distance += Self::calc_dist(
-            last_point.latitude,
-            last_point.longitude,
-            latitude,
-            longitude,
-        );    
 
-        (self.elevation_gain, self.elevation_loss) = Self::calc_elevation_gain_loss(
-            last_point.altitude,
-            altitude,
-        );    
 
-        self.rithm = self.distance / time;
-        self.time = time;
+        let rithm = state.distance / time;
+        state.rithm = rithm;
+        state.time = time;
 
-        if (time % 10 == 0.0) {
-            self.rithms.push(self.rithm);
+        if time % 10.0 == 0.0 {
+            state.rithms.push(rithm);
         } else {
-            *self.rithms.last_mut().unwrap() = self.rithm;
+            *state.rithms.last_mut().unwrap() = state.rithm;
         }
 
         println!("New point received: {}, {}", latitude, longitude);
+
         StatsTraining {
-            distance: self.distance,
-            elevation_gain: self.elevation_gain,
-            elevation_loss: self.elevation_loss,
-            rithm: self.rithm,
-            time: self.time,
-            rithms: self.rithms.clone(),
+            distance: state.distance,
+            elevation_gain: state.elevation_gain,
+            elevation_loss: state.elevation_loss,
+            rithm: state.rithm,
+            time: state.time,
+            rithms: state.rithms.clone(),
         }
     }
     
-    pub fn end_tracking(&mut self) {
+    pub fn end_tracking(&self) {
         // send results to db
 
     }
