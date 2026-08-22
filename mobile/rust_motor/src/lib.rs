@@ -140,7 +140,7 @@ impl Training {
         }
     }
     
-    pub fn end_tracking(&self) {
+    pub fn end_training(&self) {
         // send results to db
 
     }

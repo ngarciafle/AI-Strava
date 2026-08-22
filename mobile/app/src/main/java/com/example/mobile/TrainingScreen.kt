@@ -47,10 +47,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 // need to compile code also
 
 @Composable
-fun TrainingScreen(returnHome: () -> Unit) {
+fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewModel()) {
     val permissionAsker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) {
@@ -92,13 +95,26 @@ fun TrainingScreen(returnHome: () -> Unit) {
         // change UI
     }
 
+    val stats = viewModel.stats.collectAsState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
 
         }
 
-        Row(modifier = Modifier.align(Alignment.BottomCenter)) {
+        Column() {
+            Row() {
+                Text("Distance: ${stats.value.distance} m")
+                Text("Elevation Gain: ${stats.value.elevationGain} m")
+            }
 
+            Row() {
+                Text("Elevation Loss: ${stats.value.elevationLoss} m")
+                Text("Rithm: ${stats.value.rithm}")
+            }
+        }
+
+        Row(modifier = Modifier.align(Alignment.BottomCenter)) {
             StartGPS(tracing, paused, { toggleTracing() }, { stopTraining() }, { returnHome() }, context)
         }
     }

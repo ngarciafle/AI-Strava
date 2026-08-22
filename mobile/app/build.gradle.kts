@@ -67,6 +67,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("net.java.dev.jna:jna:5.19.1@aar")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+
 }
 
 extensions.configure<CargoExtension> {
