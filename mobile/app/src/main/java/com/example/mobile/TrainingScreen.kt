@@ -47,7 +47,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
-//import uniffi.rust_motor.register_new_point
 // need to compile code also
 
 @Composable
