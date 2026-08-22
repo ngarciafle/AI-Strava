@@ -15,3 +15,6 @@
 local.properties
 *.lock
 /mobile/rust_motor/target
+/target
+/mobile/build/reports
+/mobile/.idea
