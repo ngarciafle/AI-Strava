@@ -81,7 +81,7 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
 
     val context = LocalContext.current
 
-    val controlGPS = remember { ControlGPS(context) }
+    val controlGPS = remember { ControlGPS(context, viewModel) }
     var tracing by remember { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
 
@@ -115,7 +115,7 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
         }
 
         Row(modifier = Modifier.align(Alignment.BottomCenter)) {
-            StartGPS(tracing, paused, { toggleTracing() }, { stopTraining() }, { returnHome() }, context)
+            StartGPS(tracing, paused, { toggleTracing() }, { stopTraining() }, { returnHome() }, context, viewModel)
         }
     }
 }
@@ -124,8 +124,8 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
 @Composable
 //Temporal ;)
 @SuppressLint("MissingPermission")
-fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stopActivity: () -> Unit, returnHome: () -> Unit, context: Context) {
-    val newTraining: ControlGPS = remember { ControlGPS(context) }
+fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stopActivity: () -> Unit, returnHome: () -> Unit, context: Context, viewModel: TrainingViewModel ) {
+    val newTraining: ControlGPS = remember { ControlGPS(context, viewModel) }
 
 
     if (isActive && !isPaused) {
@@ -198,7 +198,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
     }
 }
 
-class ControlGPS(context: Context) {
+class ControlGPS(context: Context, private val viewModel: TrainingViewModel) {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
     private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L).build()
 
@@ -207,6 +207,7 @@ class ControlGPS(context: Context) {
             for (location in locationResult.locations) {
                 if (location.accuracy < 20f) {
                     println("New point: ${location.latitude}")
+                    viewModel.registerPoint(location.latitude, location.longitude, location.altitude, 1.0)
                 }
             }
         }
