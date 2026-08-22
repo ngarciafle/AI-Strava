@@ -25,6 +25,6 @@ class TrainingViewModel: ViewModel() {
     }
 
     fun endTraining() {
-        motorRust.endTracking()
+        motorRust.endTraining()
     }
 }

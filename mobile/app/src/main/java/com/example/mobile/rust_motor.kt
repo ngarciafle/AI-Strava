@@ -673,7 +673,7 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckContractApiVersion(this)
         uniffiCheckApiChecksums(this)
     }
-    external fun uniffi_rust_motor_checksum_method_training_end_tracking(
+    external fun uniffi_rust_motor_checksum_method_training_end_training(
     ): Int
     external fun uniffi_rust_motor_checksum_method_training_register_new_point(
     ): Int
@@ -707,7 +707,7 @@ internal object UniffiLib {
     ): Unit
     external fun uniffi_rust_motor_fn_constructor_training_new(uniffi_out_err: UniffiRustCallStatus, 
     ): Long
-    external fun uniffi_rust_motor_fn_method_training_end_tracking(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_rust_motor_fn_method_training_end_training(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_rust_motor_fn_method_training_register_new_point(`ptr`: Long,`latitude`: Double,`longitude`: Double,`altitude`: Double,`time`: Double,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -830,7 +830,7 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_rust_motor_checksum_method_training_end_tracking() != 45777) {
+    if (lib.uniffi_rust_motor_checksum_method_training_end_training() != 23267) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_rust_motor_checksum_method_training_register_new_point() != 19057) {
@@ -1414,7 +1414,7 @@ public object FfiConverterTypePoint: FfiConverter<Point, Long> {
 
 public interface TrainingInterface {
     
-    fun `endTracking`()
+    fun `endTraining`()
     
     fun `registerNewPoint`(`latitude`: kotlin.Double, `longitude`: kotlin.Double, `altitude`: kotlin.Double, `time`: kotlin.Double): StatsTraining
     
@@ -1530,11 +1530,11 @@ open class Training: Disposable, AutoCloseable, TrainingInterface
         }
     }
 
-    override fun `endTracking`()
+    override fun `endTraining`()
         = 
     callWithHandle {
     uniffiRustCall() { _status ->
-    UniffiLib.uniffi_rust_motor_fn_method_training_end_tracking(
+    UniffiLib.uniffi_rust_motor_fn_method_training_end_training(
         it,
         _status)
 }

@@ -89,6 +89,11 @@ impl Training {
 
     pub fn register_new_point(&self, latitude: f64, longitude: f64, altitude: f64, time: f64) -> StatsTraining {
         let mut state = self.state.lock().unwrap();
+        
+        let last_point = match state.vec_points.last() {
+            Some(point) => Some((point.latitude, point.longitude, point.altitude)),
+            None => (latitude, longitude, altitude).into(),
+        };  
 
         state.vec_points.push(Point {
             latitude,
@@ -96,10 +101,6 @@ impl Training {
             altitude,
         });
 
-        let last_point = match state.vec_points.last() {
-            Some(point) => Some((point.latitude, point.longitude, point.altitude)),
-            None => return StatsTraining { distance: 0.0, elevation_gain: 0.0, elevation_loss: 0.0, rithm: 0.0, time: 0.0, rithms: Vec::new() },
-        };  
 
         if let Some((last_lat, last_lon, last_alt)) = last_point {
             let distance = Self::calc_dist(
