@@ -126,7 +126,7 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
         }
 
         Row(modifier = Modifier.align(Alignment.BottomCenter)) {
-            StartGPS(tracing, paused, { toggleTracing() }, { stopTraining() }, { returnHome() }, context, viewModel)
+            StartGPS(tracing, paused, { toggleTracing() }, { stopTraining() }, { returnHome() }, controlGPS)
         }
     }
 }
@@ -135,8 +135,7 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
 @Composable
 //Temporal ;)
 @SuppressLint("MissingPermission")
-fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stopActivity: () -> Unit, returnHome: () -> Unit, context: Context, viewModel: TrainingViewModel ) {
-    val newTraining: ControlGPS = remember { ControlGPS(context, viewModel) }
+fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stopActivity: () -> Unit, returnHome: () -> Unit, newTraining: ControlGPS ) {
 
 
     if (isActive && !isPaused) {
