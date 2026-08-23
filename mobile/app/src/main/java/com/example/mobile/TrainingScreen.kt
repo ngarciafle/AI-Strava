@@ -112,6 +112,17 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
                 Text("Elevation Loss: ${stats.value.elevationLoss} m")
                 Text("Rithm: ${stats.value.rithm}")
             }
+
+            val currentTime = viewModel.timeInSeconds.doubleValue.toInt()
+
+            val seconds = currentTime % 60
+            val minutes = currentTime / 60
+            val hours = minutes / 60
+            if (hours == 0) {
+                Text(String.format("%02d:%02d", minutes, seconds))
+            } else {
+                Text(String.format("%d:%02d:%02d", hours, minutes, seconds))
+            }
         }
 
         Row(modifier = Modifier.align(Alignment.BottomCenter)) {
@@ -207,7 +218,7 @@ class ControlGPS(context: Context, private val viewModel: TrainingViewModel) {
             for (location in locationResult.locations) {
                 if (location.accuracy < 20f) {
                     println("New point: ${location.latitude}")
-                    viewModel.registerPoint(location.latitude, location.longitude, location.altitude, 1.0)
+                    viewModel.registerPoint(location.latitude, location.longitude, location.altitude)
                 }
             }
         }
@@ -216,6 +227,7 @@ class ControlGPS(context: Context, private val viewModel: TrainingViewModel) {
     // Need to check permission of ACCESS <- ** need to look into
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     fun init() {
+        viewModel.startTimer()
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
@@ -225,10 +237,12 @@ class ControlGPS(context: Context, private val viewModel: TrainingViewModel) {
 
     fun end() {
         // Send to rust the order to end all and change UI
+        viewModel.pauseTimer()
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     fun stop() {
+        viewModel.pauseTimer()
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
