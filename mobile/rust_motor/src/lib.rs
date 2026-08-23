@@ -123,10 +123,13 @@ impl Training {
         state.rithm = rithm;
         state.time = time;
 
-        if time % 10.0 == 0.0 {
+        // Its not well implemented -> need to create a vec of distances or sth to calc rithms every km or zone
+        if state.distance % 10.0 == 0.0 || state.rithms.is_empty() {
             state.rithms.push(rithm);
         } else {
-            *state.rithms.last_mut().unwrap() = state.rithm;
+            if let Some(last) = state.rithms.last_mut() {
+                *last = rithm;
+            }
         }
 
         println!("New point received: {}, {}", latitude, longitude);
