@@ -18,3 +18,4 @@ local.properties
 /target
 /mobile/build/reports
 /mobile/.idea
+backend/.env
