@@ -43,7 +43,7 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
     pool.execute(
         "INSERT INTO trainings (distance_km, time_minutes, user_id, rithms) VALUES ($1, $2, $3, $4)",
         &[&distance_km, &time_minutes, &user_id, &rithms],
-    )
+    );
     
     "Post Activity"
 
@@ -51,6 +51,22 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
 }
 
 async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'static str {
+    // No public search for now
+    let user_id = header.get("user_id");
+    // No verification for now
 
-    "Get Activities"
+    let activities = pool.fetch_all(
+        "SELECT * FROM trainings WHERE user_id = $1",
+        &[&user_id] 
+    ).await;
+
+    return activities {
+        Ok(activities) =>  {
+            // Return activities as JSON
+            let activities_json = serde_json::to_string(&activities).unwrap();
+            activities_json.as_str()
+        },
+        Err(_) =>  "Failed to fetch activities"
+    };
+
 }
