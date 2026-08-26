@@ -15,10 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -47,10 +47,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 // need to compile code also
@@ -101,19 +105,62 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
     val stats = viewModel.stats.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
+
+        if (!tracing) {
+            Button(
+                onClick = { returnHome() },
+                modifier = Modifier.align(Alignment.TopStart),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Icon(
+                    Icons.Rounded.ArrowBackIosNew, "Back",
+                )
+            }
+        }
         Column {
 
         }
 
         Column() {
-            Row() {
-                Text("Distance: ${stats.value.distance} m")
-                Text("Elevation Gain: ${stats.value.elevationGain} m")
+            Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(String.format("%.2f", stats.value.distance), style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.Bold,)
+                    Text("Distance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                VerticalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.height(60.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(String.format("%.2f", stats.value.rithm), style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.Bold,)
+                    Text("Rithm", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
 
-            Row() {
-                Text("Elevation Loss: ${stats.value.elevationLoss} m")
-                Text("Rithm: ${stats.value.rithm}")
+            Row(modifier = Modifier.align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "${stats.value.elevationGain.toInt()}",
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text("Elevation gain", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                VerticalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.height(60.dp)
+                )
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "${stats.value.elevationLoss.toInt()}",
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold)
+                    Text("Elevation loss", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
 
             val currentTime = viewModel.timeInSeconds.doubleValue.toInt()
@@ -122,9 +169,13 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
             val minutes = currentTime / 60
             val hours = minutes / 60
             if (hours == 0) {
-                Text(String.format("%02d:%02d", minutes, seconds))
+                Text(String.format("%02d:%02d", minutes, seconds),
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.Bold,)
             } else {
-                Text(String.format("%d:%02d:%02d", hours, minutes, seconds))
+                Text(String.format("%d:%02d:%02d", hours, minutes, seconds),
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.Bold,)
             }
         }
 
@@ -186,7 +237,9 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
                 onClick = {
                     stopActivity(); newTraining.init()
                 },
-                modifier = Modifier.weight(0.4f).padding(10.dp,0.dp,4.dp, 0.dp),
+                modifier = Modifier
+                    .weight(0.4f)
+                    .padding(10.dp, 0.dp, 4.dp, 0.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -205,7 +258,9 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
                 onClick = {
                     returnHome(); newTraining.end()
                 },
-                modifier = Modifier.weight(0.4f).padding(4.dp,0.dp,10.dp, 0.dp),
+                modifier = Modifier
+                    .weight(0.4f)
+                    .padding(4.dp, 0.dp, 10.dp, 0.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.surface,
