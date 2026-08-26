@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -145,7 +146,9 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
             onClick = {
                 stopActivity(); newTraining.stop()
             },
-            modifier = Modifier.background(color = MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+            ),
             shape = RoundedCornerShape(16.dp)
         ) {
 
@@ -163,7 +166,9 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
             onClick = {
                 endTraining(); newTraining.init()
             },
-            modifier = Modifier.background(color = MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+            ),
             shape = RoundedCornerShape(16.dp)
         ) {
             Row() {
@@ -181,8 +186,12 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
                 onClick = {
                     stopActivity(); newTraining.init()
                 },
-                modifier = Modifier.weight(0.4f).padding(10.dp,0.dp,4.dp, 0.dp).background(color = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(16.dp)            ) {
+                modifier = Modifier.weight(0.4f).padding(10.dp,0.dp,4.dp, 0.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    )
+                ) {
                 Row() {
                     Icon(
                         Icons.Rounded.PlayArrow, "Restart"
@@ -196,8 +205,13 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
                 onClick = {
                     returnHome(); newTraining.end()
                 },
-                modifier = Modifier.weight(0.4f).padding(4.dp,0.dp,10.dp, 0.dp).background(color = MaterialTheme.colorScheme.secondary),
-                shape = RoundedCornerShape(16.dp)            ) {
+                modifier = Modifier.weight(0.4f).padding(4.dp,0.dp,10.dp, 0.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.background
+                    )
+                ) {
 
                 Row() {
                     Icon(
