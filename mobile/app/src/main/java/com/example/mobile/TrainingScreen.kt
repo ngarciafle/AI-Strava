@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.ButtonDefaults
@@ -121,18 +122,14 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
                 )
             }
         }
-        Column {
 
-        }
-
-        Column() {
-            Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+        Column(modifier = Modifier.align(Alignment.Center)) {
+            Row(modifier = Modifier.align(Alignment.CenterHorizontally), horizontalArrangement = Arrangement.SpaceEvenly) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(String.format("%.2f", stats.value.distance), style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.Bold,)
                     Text("Distance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 VerticalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.height(60.dp)
                 )
                 Column(modifier = Modifier.weight(1f)) {
@@ -141,7 +138,7 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
                 }
             }
 
-            Row(modifier = Modifier.align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.align(Alignment.CenterHorizontally), horizontalArrangement = Arrangement.SpaceEvenly) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         "${stats.value.elevationGain.toInt()}",
