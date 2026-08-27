@@ -236,7 +236,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
         Row {
             Button(
                 onClick = {
-                    stopActivity(); newTraining.restart()
+                    stopActivity(); newTraining.init()
                 },
                 modifier = Modifier
                     .weight(0.4f)
@@ -308,19 +308,9 @@ class ControlGPS(context: Context, private val viewModel: TrainingViewModel) {
         )
     }
 
-    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
-    fun restart() {
-        viewModel.restartTimer()
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
-    }
-
     fun end() {
         // Send to rust the order to end all and change UI
-        viewModel.pauseTimer()
+        viewModel.endTraining()
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 

@@ -36,24 +36,6 @@ class TrainingViewModel: ViewModel() {
     fun startTimer() {
         if (timerJob?.isActive == true) return
 
-        accumulatedTime = 0
-        startTime = SystemClock.elapsedRealtime()
-
-        timerJob = viewModelScope.launch {
-            while (true) {
-                val now = SystemClock.elapsedRealtime()
-                val currentSessionTime = now - startTime
-
-                timeInSeconds.doubleValue = (accumulatedTime + currentSessionTime) / 1000.0
-
-                delay(100L)
-            }
-        }
-    }
-
-    fun restartTimer() {
-        if (timerJob?.isActive == true) return
-
         startTime = SystemClock.elapsedRealtime()
 
         timerJob = viewModelScope.launch {
@@ -76,8 +58,8 @@ class TrainingViewModel: ViewModel() {
             startTime = 0
         }
 
-
     }
+
 
     fun registerPoint(lat: Double, lon: Double, alt: Double) {
 
@@ -86,6 +68,10 @@ class TrainingViewModel: ViewModel() {
     }
 
     fun endTraining() {
+        timerJob?.cancel()
+
+        accumulatedTime = 0
+        timeInSeconds.doubleValue = 0.0
         motorRust.endTraining()
     }
 }
