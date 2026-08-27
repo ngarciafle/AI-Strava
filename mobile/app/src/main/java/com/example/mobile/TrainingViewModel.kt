@@ -36,6 +36,24 @@ class TrainingViewModel: ViewModel() {
     fun startTimer() {
         if (timerJob?.isActive == true) return
 
+        accumulatedTime = 0
+        startTime = SystemClock.elapsedRealtime()
+
+        timerJob = viewModelScope.launch {
+            while (true) {
+                val now = SystemClock.elapsedRealtime()
+                val currentSessionTime = now - startTime
+
+                timeInSeconds.doubleValue = (accumulatedTime + currentSessionTime) / 1000.0
+
+                delay(100L)
+            }
+        }
+    }
+
+    fun restartTimer() {
+        if (timerJob?.isActive == true) return
+
         startTime = SystemClock.elapsedRealtime()
 
         timerJob = viewModelScope.launch {

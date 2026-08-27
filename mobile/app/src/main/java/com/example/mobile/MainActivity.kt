@@ -41,7 +41,6 @@ class MainActivity : ComponentActivity() {
 @PreviewScreenSizes
 @Composable
 fun MobileApp() {
-
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
 
     fun returnHome() {
@@ -49,45 +48,39 @@ fun MobileApp() {
         currentDestination = AppDestinations.HOME
     }
 
+    if (currentDestination == AppDestinations.RECORD) {
+        TrainingScreen(returnHome = { returnHome() })
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            val destinationsToShow = if (currentDestination.label == "Record") {
-                emptyList()
-            } else {
-                AppDestinations.entries
-            }
-
-            destinationsToShow.forEach {
-                item(
-                    icon = {
-                        Icon(
-                            it.icon,
-                            contentDescription = it.label
-                        )
-                    },
-                    label = { Text(it.label) },
-                    selected = it == currentDestination,
-                    onClick = { currentDestination = it }
-                )
-            }
-        }
-    ) {
-        when (currentDestination.label) {
-            "Home" -> {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+    } else {
+        NavigationSuiteScaffold(
+            navigationSuiteItems = {
+                AppDestinations.entries.forEach { it ->
+                    item(
+                        icon = {
+                            Icon(
+                                it.icon,
+                                contentDescription = it.label
+                            )
+                        },
+                        label = { Text(it.label) },
+                        selected = it == currentDestination,
+                        onClick = { currentDestination = it }
                     )
-
                 }
             }
-            "Record" -> {
-                TrainingScreen({ returnHome() })
-            }
-            else -> {
-                Account()
+        ) {
+            when (currentDestination.label) {
+                "Home" -> {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        Greeting(
+                            name = "Android",
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+                }
+                else -> {
+                    Account()
+                }
             }
         }
     }

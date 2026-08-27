@@ -48,6 +48,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
@@ -104,7 +105,7 @@ fun TrainingScreen(returnHome: () -> Unit, viewModel: TrainingViewModel = viewMo
 
     val stats = viewModel.stats.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().systemBarsPadding().background(MaterialTheme.colorScheme.background)) {
 
         if (!tracing) {
             Button(
@@ -235,7 +236,7 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
         Row {
             Button(
                 onClick = {
-                    stopActivity(); newTraining.init()
+                    stopActivity(); newTraining.restart()
                 },
                 modifier = Modifier
                     .weight(0.4f)
@@ -300,6 +301,16 @@ class ControlGPS(context: Context, private val viewModel: TrainingViewModel) {
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     fun init() {
         viewModel.startTimer()
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            Looper.getMainLooper()
+        )
+    }
+
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    fun restart() {
+        viewModel.restartTimer()
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
