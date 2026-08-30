@@ -27,12 +27,13 @@ class TrainingViewModel: ViewModel() {
             elevationLoss = 0.0,
             rithm = 0.0,
             time = 0.0,
-            rithms = listOf()
+            timeRound = 0.0
+            rithms = listOf(),
+            times = listOf()
         )
     )
     val stats = _stats.asStateFlow()
 
-    // NOT WORKS CAUSE ITS CALLED WHENEVER IT WANTS
     fun startTimer() {
         if (timerJob?.isActive == true) return
 
