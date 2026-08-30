@@ -19,7 +19,9 @@ struct StatsTraining {
     elevation_loss: f64,
     rithm: f64,
     time: f64,
+    timeRound: f64,
     rithms: Vec<f64>,
+    times: Vec<f64>
 }
 
 struct TrainingState {
@@ -29,7 +31,9 @@ struct TrainingState {
     elevation_loss: f64,
     rithm: f64,
     time: f64,
+    timeRound: f64,
     rithms: Vec<f64>,
+    times: Vec<f64>,
 }
 
 #[derive(uniffi::Object)]
@@ -82,12 +86,14 @@ impl Training {
                 elevation_loss: 0.0,
                 rithm: 0.0,
                 time: 0.0,
+                timeRound: 0.0,
                 rithms: Vec::new(),
+                times: Vec::new()
             })
         }
     }
 
-    pub fn register_new_point(&self, latitude: f64, longitude: f64, altitude: f64, time: f64) -> StatsTraining {
+    pub fn register_new_point(&self, latitude: f64, longitude: f64, altitude: f64, time: f64, timeRound: f64) -> StatsTraining {
         let mut state = self.state.lock().unwrap();
         
         let last_point = match state.vec_points.last() {
@@ -118,14 +124,16 @@ impl Training {
         }
         
 
-
-        let rithm = state.distance / time;
+        // Rithm calcs the rithm of the last km
+        let rithm: f64 = timeRound / (state.distance % 10.0);
         state.rithm = rithm;
         state.time = time;
 
         // Its not well implemented -> need to create a vec of distances or sth to calc rithms every km or zone
         if state.distance % 10.0 == 0.0 || state.rithms.is_empty() {
             state.rithms.push(rithm);
+            state.times.push(timeRound);
+            state.timeRound = 0.0
         } else {
             if let Some(last) = state.rithms.last_mut() {
                 *last = rithm;
@@ -140,7 +148,9 @@ impl Training {
             elevation_loss: state.elevation_loss,
             rithm: state.rithm,
             time: state.time,
+            timeRound: state.timeRound,
             rithms: state.rithms.clone(),
+            times: state.times.clone(),
         }
     }
     
