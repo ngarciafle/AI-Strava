@@ -112,3 +112,28 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
+
+// Experimental
+data class TrainingSession(
+    val name: String,
+    val date: String,
+    val distanceKm: Double,
+    val durationSeconds: Int,
+    val averagePace: String,   // Ej: "4:30"
+    val elevationGain: Int,
+    val elevationLoss: Int,
+)
+
+// Server should return a training object ??
+@Composable
+fun activity(training: TrainingSession) {
+    // Maybe add an onclick??
+    Card() {
+        Column() {
+            Row() {
+                Text("${training.name}")
+                // Just show the data with control -> not much
+            }
+        }
+    }
+}
