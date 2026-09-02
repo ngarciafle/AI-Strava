@@ -17,13 +17,9 @@ package com.example.mobile
 // compile the Rust component. The easiest way to ensure this is to bundle the Kotlin
 // helpers directly inline like we're doing here.
 
-import com.sun.jna.Library
-import com.sun.jna.IntegerType
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
-import com.sun.jna.Callback
-import com.sun.jna.ptr.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.CharBuffer
@@ -1600,18 +1596,19 @@ public object FfiConverterTypeTraining: FfiConverter<Training, Long> {
 
 
 data class StatsTraining (
-    var `distance`: kotlin.Double
-    , 
-    var `elevationGain`: kotlin.Double
-    , 
-    var `elevationLoss`: kotlin.Double
-    , 
-    var `rithm`: kotlin.Double
-    , 
-    var `time`: kotlin.Double
-    , 
-    var `rithms`: List<kotlin.Double>
-    
+    var `distance`: Double
+    ,
+    var `elevationGain`: Double
+    ,
+    var `elevationLoss`: Double
+    ,
+    var `rithm`: Double
+    ,
+    var `time`: Double
+    ,
+    var `rithms`: List<Double>,
+    val timeRound: Double
+
 ){
     
 
@@ -1632,7 +1629,7 @@ public object FfiConverterTypeStatsTraining: FfiConverterRustBuffer<StatsTrainin
             FfiConverterDouble.read(buf),
             FfiConverterDouble.read(buf),
             FfiConverterDouble.read(buf),
-            FfiConverterSequenceDouble.read(buf),
+            FfiConverterSequenceDouble.read(buf),,
         )
     }
 
