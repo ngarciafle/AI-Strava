@@ -38,10 +38,11 @@ struct Training {
 }
 
 impl Training {
-    const EARTH_RAD: f64 = 6371000.0;
+    const EARTH_RAD: f64 = 6371.0;
     const THRESHOLD_LOW: f64 = 1.0;
     const THRESHOLD_HIGH: f64 = 1000.0;
 
+    // In KM
     fn calc_dist(lat: f64, lon: f64, lat2: f64, lon2: f64) -> f64 {
         let d_lat = (lat2 - lat).to_radians();
         let d_lon = (lon2 - lon).to_radians();
@@ -118,8 +119,12 @@ impl Training {
         }
         
 
-
-        let rithm = state.distance / time;
+        
+        let rithm = if state.distance < 5.0 {
+            0.0
+        } else {
+            time * 60.0 / state.distance // time in minutes per km
+        };
         state.rithm = rithm;
         state.time = time;
 
