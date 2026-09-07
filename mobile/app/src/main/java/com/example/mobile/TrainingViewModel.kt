@@ -17,17 +17,20 @@ class TrainingViewModel: ViewModel() {
         private set
 
     private var startTime = 0L
+    private var lapStartTime = 0.0
+    private var lapStartDistance = 0.0
     private var accumulatedTime = 0L
     private var timerJob: Job? = null
 
     private val _stats = MutableStateFlow<StatsTraining>(
         StatsTraining(
             distance = 0.0,
+            distanceLap = 0.0,
             elevationGain = 0.0,
             elevationLoss = 0.0,
             rithm = 0.0,
             time = 0.0,
-            timeRound = 0.0,
+            timeLap = 0.0,
             rithms = listOf(),
             times = listOf()
         )
@@ -65,7 +68,20 @@ class TrainingViewModel: ViewModel() {
     fun registerPoint(lat: Double, lon: Double, alt: Double) {
 
         val newStats = motorRust.registerNewPoint(lat, lon, alt, timeInSeconds.doubleValue)
+
+        val currentLapDistance = newStats.distance - lapStartDistance
+        val timeLap = SystemClock.elapsedRealtime() - lapStartTime
+
+        if (currentLapDistance >= 1000.0) {
+            triggerLap(currentLapDistance, timeLap)
+        }
+
         _stats.value = newStats
+    }
+
+    fun triggerLap(dist: Double, time: Double) {
+        lapStartTime = SystemClock.elapsedRealtime().toDouble()
+        motorRust.registerLap(time, dist)
     }
 
     fun endTraining() {

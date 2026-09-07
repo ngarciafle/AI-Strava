@@ -17,9 +17,14 @@ package com.example.mobile
 // compile the Rust component. The easiest way to ensure this is to bundle the Kotlin
 // helpers directly inline like we're doing here.
 
+import com.sun.jna.Library
+import com.sun.jna.IntegerType
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
+import com.sun.jna.Callback
+import com.sun.jna.internal.Cleaner
+import com.sun.jna.ptr.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.CharBuffer
@@ -108,28 +113,28 @@ internal open class ForeignBytes : Structure() {
 // stable native address that JNA can expose via `getDirectBufferPointer`.
 // The returned `ForeignBytes.ByValue` is only valid for the duration of
 // the FFI call; the Rust side treats it as a borrow.
-internal object FfiConverterByRefBytes : FfiConverter<java.nio.ByteBuffer, ForeignBytes.ByValue> {
-    override fun lower(value: java.nio.ByteBuffer): ForeignBytes.ByValue {
+internal object FfiConverterByRefBytes : FfiConverter<ByteBuffer, ForeignBytes.ByValue> {
+    override fun lower(value: ByteBuffer): ForeignBytes.ByValue {
         require(value.isDirect) { "UniFFI zero-copy &[u8] requires a direct ByteBuffer. Use ByteBuffer.allocateDirect()." }
         val remaining = value.remaining()
         val fb = ForeignBytes.ByValue()
         fb.len = remaining
         // Zero-length direct buffers: skip getDirectBufferPointer (platform-variable behavior)
         // and pass null. The Rust side treats (null, 0) as &[].
-        fb.data = if (remaining == 0) null else com.sun.jna.Native.getDirectBufferPointer(value)
+        fb.data = if (remaining == 0) null else Native.getDirectBufferPointer(value)
         return fb
     }
 
-    override fun lift(value: ForeignBytes.ByValue): java.nio.ByteBuffer =
+    override fun lift(value: ForeignBytes.ByValue): ByteBuffer =
         error("ByRef bytes cannot be lifted: zero-copy &[u8] only flows foreign->Rust")
 
-    override fun read(buf: java.nio.ByteBuffer): java.nio.ByteBuffer =
+    override fun read(buf: ByteBuffer): ByteBuffer =
         error("ByRef bytes cannot be read from a buffer: zero-copy &[u8] is only supported in argument position, not nested in records/options/etc.")
 
-    override fun write(value: java.nio.ByteBuffer, buf: java.nio.ByteBuffer): Unit =
+    override fun write(value: ByteBuffer, buf: ByteBuffer): Unit =
         error("ByRef bytes cannot be written to a buffer: zero-copy &[u8] is only supported in argument position, not nested in records/options/etc.")
 
-    override fun allocationSize(value: java.nio.ByteBuffer): ULong =
+    override fun allocationSize(value: ByteBuffer): ULong =
         error("ByRef bytes have no RustBuffer allocation size: zero-copy &[u8] is only supported in argument position, not nested in records/options/etc.")
 }
 /**
@@ -247,7 +252,7 @@ internal open class UniffiRustCallStatus : Structure() {
     }
 }
 
-class InternalException(message: String) : kotlin.Exception(message)
+class InternalException(message: String) : Exception(message)
 
 /**
  * Each top-level error class has a companion object that can lift the error from the call status's rust buffer
@@ -263,7 +268,7 @@ interface UniffiRustCallStatusErrorHandler<E> {
 // synchronize itself
 
 // Call a rust function that returns a Result<>.  Pass in the Error class companion that corresponds to the Err
-private inline fun <U, E: kotlin.Exception> uniffiRustCallWithError(errorHandler: UniffiRustCallStatusErrorHandler<E>, callback: (UniffiRustCallStatus) -> U): U {
+private inline fun <U, E: Exception> uniffiRustCallWithError(errorHandler: UniffiRustCallStatusErrorHandler<E>, callback: (UniffiRustCallStatus) -> U): U {
     var status = UniffiRustCallStatus()
     val return_value = callback(status)
     uniffiCheckCallStatus(errorHandler, status)
@@ -271,7 +276,7 @@ private inline fun <U, E: kotlin.Exception> uniffiRustCallWithError(errorHandler
 }
 
 // Check UniffiRustCallStatus and throw an error if the call wasn't successful
-private fun<E: kotlin.Exception> uniffiCheckCallStatus(errorHandler: UniffiRustCallStatusErrorHandler<E>, status: UniffiRustCallStatus) {
+private fun<E: Exception> uniffiCheckCallStatus(errorHandler: UniffiRustCallStatusErrorHandler<E>, status: UniffiRustCallStatus) {
     if (status.isSuccess()) {
         return
     } else if (status.isError()) {
@@ -314,7 +319,7 @@ internal inline fun<T> uniffiTraitInterfaceCall(
 ) {
     try {
         writeReturn(makeCall())
-    } catch(e: kotlin.Exception) {
+    } catch(e: Exception) {
         val err = try { e.stackTraceToString() } catch(_: Throwable) { "" }
         callStatus.code = UNIFFI_CALL_UNEXPECTED_ERROR
         callStatus.error_buf = FfiConverterString.lower(err)
@@ -329,7 +334,7 @@ internal inline fun<T, reified E: Throwable> uniffiTraitInterfaceCallWithError(
 ) {
     try {
         writeReturn(makeCall())
-    } catch(e: kotlin.Exception) {
+    } catch(e: Exception) {
         if (e is E) {
             callStatus.code = UNIFFI_CALL_ERROR
             callStatus.error_buf = lowerError(e)
@@ -351,7 +356,7 @@ private const val UNIFFI_HANDLEMAP_DELTA = 2.toLong()
 internal class UniffiHandleMap<T: Any> {
     private val map = ConcurrentHashMap<Long, T>()
     // Start 
-    private val counter = java.util.concurrent.atomic.AtomicLong(UNIFFI_HANDLEMAP_INITIAL)
+    private val counter = AtomicLong(UNIFFI_HANDLEMAP_INITIAL)
 
     val size: Int
         get() = map.size
@@ -392,16 +397,16 @@ private fun findLibraryName(componentName: String): String {
 }
 
 // Define FFI callback types
-internal interface UniffiRustFutureContinuationCallback : com.sun.jna.Callback {
+internal interface UniffiRustFutureContinuationCallback : Callback {
     fun callback(`data`: Long,`pollResult`: Byte,)
 }
-internal interface UniffiForeignFutureDroppedCallback : com.sun.jna.Callback {
+internal interface UniffiForeignFutureDroppedCallback : Callback {
     fun callback(`handle`: Long,)
 }
-internal interface UniffiCallbackInterfaceFree : com.sun.jna.Callback {
+internal interface UniffiCallbackInterfaceFree : Callback {
     fun callback(`handle`: Long,)
 }
-internal interface UniffiCallbackInterfaceClone : com.sun.jna.Callback {
+internal interface UniffiCallbackInterfaceClone : Callback {
     fun callback(`handle`: Long,)
     : Long
 }
@@ -413,7 +418,7 @@ internal open class UniffiForeignFutureDroppedCallbackStruct(
     class UniffiByValue(
         `handle`: Long = 0.toLong(),
         `free`: UniffiForeignFutureDroppedCallback? = null,
-    ): UniffiForeignFutureDroppedCallbackStruct(`handle`,`free`,), Structure.ByValue
+    ): UniffiForeignFutureDroppedCallbackStruct(`handle`,`free`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureDroppedCallbackStruct) {
         `handle` = other.`handle`
@@ -429,7 +434,7 @@ internal open class UniffiForeignFutureResultU8(
     class UniffiByValue(
         `returnValue`: Byte = 0.toByte(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultU8(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultU8(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultU8) {
         `returnValue` = other.`returnValue`
@@ -437,7 +442,7 @@ internal open class UniffiForeignFutureResultU8(
     }
 
 }
-internal interface UniffiForeignFutureCompleteU8 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteU8 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultU8.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -448,7 +453,7 @@ internal open class UniffiForeignFutureResultI8(
     class UniffiByValue(
         `returnValue`: Byte = 0.toByte(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultI8(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultI8(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultI8) {
         `returnValue` = other.`returnValue`
@@ -456,7 +461,7 @@ internal open class UniffiForeignFutureResultI8(
     }
 
 }
-internal interface UniffiForeignFutureCompleteI8 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteI8 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultI8.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -467,7 +472,7 @@ internal open class UniffiForeignFutureResultU16(
     class UniffiByValue(
         `returnValue`: Short = 0.toShort(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultU16(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultU16(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultU16) {
         `returnValue` = other.`returnValue`
@@ -475,7 +480,7 @@ internal open class UniffiForeignFutureResultU16(
     }
 
 }
-internal interface UniffiForeignFutureCompleteU16 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteU16 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultU16.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -486,7 +491,7 @@ internal open class UniffiForeignFutureResultI16(
     class UniffiByValue(
         `returnValue`: Short = 0.toShort(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultI16(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultI16(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultI16) {
         `returnValue` = other.`returnValue`
@@ -494,7 +499,7 @@ internal open class UniffiForeignFutureResultI16(
     }
 
 }
-internal interface UniffiForeignFutureCompleteI16 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteI16 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultI16.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -505,7 +510,7 @@ internal open class UniffiForeignFutureResultU32(
     class UniffiByValue(
         `returnValue`: Int = 0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultU32(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultU32(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultU32) {
         `returnValue` = other.`returnValue`
@@ -513,7 +518,7 @@ internal open class UniffiForeignFutureResultU32(
     }
 
 }
-internal interface UniffiForeignFutureCompleteU32 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteU32 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultU32.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -524,7 +529,7 @@ internal open class UniffiForeignFutureResultI32(
     class UniffiByValue(
         `returnValue`: Int = 0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultI32(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultI32(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultI32) {
         `returnValue` = other.`returnValue`
@@ -532,7 +537,7 @@ internal open class UniffiForeignFutureResultI32(
     }
 
 }
-internal interface UniffiForeignFutureCompleteI32 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteI32 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultI32.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -543,7 +548,7 @@ internal open class UniffiForeignFutureResultU64(
     class UniffiByValue(
         `returnValue`: Long = 0.toLong(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultU64(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultU64(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultU64) {
         `returnValue` = other.`returnValue`
@@ -551,7 +556,7 @@ internal open class UniffiForeignFutureResultU64(
     }
 
 }
-internal interface UniffiForeignFutureCompleteU64 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteU64 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultU64.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -562,7 +567,7 @@ internal open class UniffiForeignFutureResultI64(
     class UniffiByValue(
         `returnValue`: Long = 0.toLong(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultI64(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultI64(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultI64) {
         `returnValue` = other.`returnValue`
@@ -570,7 +575,7 @@ internal open class UniffiForeignFutureResultI64(
     }
 
 }
-internal interface UniffiForeignFutureCompleteI64 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteI64 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultI64.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -581,7 +586,7 @@ internal open class UniffiForeignFutureResultF32(
     class UniffiByValue(
         `returnValue`: Float = 0.0f,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultF32(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultF32(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultF32) {
         `returnValue` = other.`returnValue`
@@ -589,7 +594,7 @@ internal open class UniffiForeignFutureResultF32(
     }
 
 }
-internal interface UniffiForeignFutureCompleteF32 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteF32 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultF32.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -600,7 +605,7 @@ internal open class UniffiForeignFutureResultF64(
     class UniffiByValue(
         `returnValue`: Double = 0.0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultF64(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultF64(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultF64) {
         `returnValue` = other.`returnValue`
@@ -608,7 +613,7 @@ internal open class UniffiForeignFutureResultF64(
     }
 
 }
-internal interface UniffiForeignFutureCompleteF64 : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteF64 : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultF64.UniffiByValue,)
 }
 @Structure.FieldOrder("returnValue", "callStatus")
@@ -619,7 +624,7 @@ internal open class UniffiForeignFutureResultRustBuffer(
     class UniffiByValue(
         `returnValue`: RustBuffer.ByValue = RustBuffer.ByValue(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultRustBuffer(`returnValue`,`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultRustBuffer(`returnValue`,`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultRustBuffer) {
         `returnValue` = other.`returnValue`
@@ -627,7 +632,7 @@ internal open class UniffiForeignFutureResultRustBuffer(
     }
 
 }
-internal interface UniffiForeignFutureCompleteRustBuffer : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteRustBuffer : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultRustBuffer.UniffiByValue,)
 }
 @Structure.FieldOrder("callStatus")
@@ -636,14 +641,14 @@ internal open class UniffiForeignFutureResultVoid(
 ) : Structure() {
     class UniffiByValue(
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ): UniffiForeignFutureResultVoid(`callStatus`,), Structure.ByValue
+    ): UniffiForeignFutureResultVoid(`callStatus`,), ByValue
 
    internal fun uniffiSetValue(other: UniffiForeignFutureResultVoid) {
         `callStatus` = other.`callStatus`
     }
 
 }
-internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
+internal interface UniffiForeignFutureCompleteVoid : Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultVoid.UniffiByValue,)
 }
 
@@ -670,6 +675,8 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckApiChecksums(this)
     }
     external fun uniffi_rust_motor_checksum_method_training_end_training(
+    ): Int
+    external fun uniffi_rust_motor_checksum_method_training_register_lap(
     ): Int
     external fun uniffi_rust_motor_checksum_method_training_register_new_point(
     ): Int
@@ -705,7 +712,9 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_rust_motor_fn_method_training_end_training(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_rust_motor_fn_method_training_register_new_point(`ptr`: Long,`latitude`: Double,`longitude`: Double,`altitude`: Double,`time`: Double,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_rust_motor_fn_method_training_register_lap(`ptr`: Long,`distanceLap`: Double,`timeLap`: Double,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_rust_motor_fn_method_training_register_new_point(`ptr`: Long,`latitude`: Double,`longitude`: Double,`altitude`: Double,`time`: Double,`timeLap`: Double,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_rust_motor_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -829,7 +838,10 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_rust_motor_checksum_method_training_end_training() != 23267) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_rust_motor_checksum_method_training_register_new_point() != 19057) {
+    if (lib.uniffi_rust_motor_checksum_method_training_register_lap() != 48797) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_rust_motor_checksum_method_training_register_new_point() != 58450) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_rust_motor_checksum_constructor_training_new() != 18061) {
@@ -949,14 +961,14 @@ interface UniffiCleaner {
 
 // The fallback Jna cleaner, which is available for both Android, and the JVM.
 private class UniffiJnaCleaner : UniffiCleaner {
-    private val cleaner = com.sun.jna.internal.Cleaner.getCleaner()
+    private val cleaner = Cleaner.getCleaner()
 
     override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
         UniffiJnaCleanable(cleaner.register(value, cleanUpTask))
 }
 
 private class UniffiJnaCleanable(
-    private val cleanable: com.sun.jna.internal.Cleaner.Cleanable,
+    private val cleanable: Cleaner.Cleanable,
 ) : UniffiCleaner.Cleanable {
     override fun clean() = cleanable.clean()
 }
@@ -972,7 +984,7 @@ private fun UniffiCleaner.Companion.create(): UniffiCleaner =
         // mode, but is being run on Android, then we still need to think about
         // Android API versions.
         // So we check if java.lang.ref.Cleaner is there, and use that…
-        java.lang.Class.forName("java.lang.ref.Cleaner")
+        Class.forName("java.lang.ref.Cleaner")
         JavaLangRefCleaner()
     } catch (e: ClassNotFoundException) {
         // … otherwise, fallback to the JNA cleaner.
@@ -1412,7 +1424,9 @@ public interface TrainingInterface {
     
     fun `endTraining`()
     
-    fun `registerNewPoint`(`latitude`: kotlin.Double, `longitude`: kotlin.Double, `altitude`: kotlin.Double, `time`: kotlin.Double): StatsTraining
+    fun `registerLap`(`distanceLap`: Double, `timeLap`: Double)
+    
+    fun `registerNewPoint`(`latitude`: Double, `longitude`: Double, `altitude`: Double, `time`: Double, `timeLap`: Double): StatsTraining
     
     companion object
 }
@@ -1538,7 +1552,21 @@ open class Training: Disposable, AutoCloseable, TrainingInterface
     
     
 
-    override fun `registerNewPoint`(`latitude`: kotlin.Double, `longitude`: kotlin.Double, `altitude`: kotlin.Double, `time`: kotlin.Double): StatsTraining {
+    override fun `registerLap`(`distanceLap`: Double, `timeLap`: Double)
+        = 
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_rust_motor_fn_method_training_register_lap(
+        it,
+        
+        FfiConverterDouble.lower(`distanceLap`),
+        FfiConverterDouble.lower(`timeLap`),_status)
+}
+    }
+    
+    
+
+    override fun `registerNewPoint`(`latitude`: Double, `longitude`: Double, `altitude`: Double, `time`: Double, `timeLap`: Double): StatsTraining {
             return FfiConverterTypeStatsTraining.lift(
     callWithHandle {
     uniffiRustCall() { _status ->
@@ -1548,7 +1576,8 @@ open class Training: Disposable, AutoCloseable, TrainingInterface
         FfiConverterDouble.lower(`latitude`),
         FfiConverterDouble.lower(`longitude`),
         FfiConverterDouble.lower(`altitude`),
-        FfiConverterDouble.lower(`time`),_status)
+        FfiConverterDouble.lower(`time`),
+        FfiConverterDouble.lower(`timeLap`),_status)
 }
     }
     )
@@ -1597,18 +1626,23 @@ public object FfiConverterTypeTraining: FfiConverter<Training, Long> {
 
 data class StatsTraining (
     var `distance`: Double
-    ,
+    , 
+    var `distanceLap`: Double
+    , 
     var `elevationGain`: Double
-    ,
+    , 
     var `elevationLoss`: Double
-    ,
+    , 
     var `rithm`: Double
-    ,
+    , 
     var `time`: Double
-    ,
-    var `rithms`: List<Double>,
-    val timeRound: Double
-
+    , 
+    var `timeLap`: Double
+    , 
+    var `rithms`: List<Double>
+    , 
+    var `times`: List<Double>
+    
 ){
     
 
@@ -1629,26 +1663,35 @@ public object FfiConverterTypeStatsTraining: FfiConverterRustBuffer<StatsTrainin
             FfiConverterDouble.read(buf),
             FfiConverterDouble.read(buf),
             FfiConverterDouble.read(buf),
-            FfiConverterSequenceDouble.read(buf),,
+            FfiConverterDouble.read(buf),
+            FfiConverterDouble.read(buf),
+            FfiConverterSequenceDouble.read(buf),
+            FfiConverterSequenceDouble.read(buf),
         )
     }
 
     override fun allocationSize(value: StatsTraining) = (
             FfiConverterDouble.allocationSize(value.`distance`) +
+            FfiConverterDouble.allocationSize(value.`distanceLap`) +
             FfiConverterDouble.allocationSize(value.`elevationGain`) +
             FfiConverterDouble.allocationSize(value.`elevationLoss`) +
             FfiConverterDouble.allocationSize(value.`rithm`) +
             FfiConverterDouble.allocationSize(value.`time`) +
-            FfiConverterSequenceDouble.allocationSize(value.`rithms`)
+            FfiConverterDouble.allocationSize(value.`timeLap`) +
+            FfiConverterSequenceDouble.allocationSize(value.`rithms`) +
+            FfiConverterSequenceDouble.allocationSize(value.`times`)
     )
 
     override fun write(value: StatsTraining, buf: ByteBuffer) {
             FfiConverterDouble.write(value.`distance`, buf)
+            FfiConverterDouble.write(value.`distanceLap`, buf)
             FfiConverterDouble.write(value.`elevationGain`, buf)
             FfiConverterDouble.write(value.`elevationLoss`, buf)
             FfiConverterDouble.write(value.`rithm`, buf)
             FfiConverterDouble.write(value.`time`, buf)
+            FfiConverterDouble.write(value.`timeLap`, buf)
             FfiConverterSequenceDouble.write(value.`rithms`, buf)
+            FfiConverterSequenceDouble.write(value.`times`, buf)
     }
 }
 
@@ -1658,21 +1701,21 @@ public object FfiConverterTypeStatsTraining: FfiConverterRustBuffer<StatsTrainin
 /**
  * @suppress
  */
-public object FfiConverterSequenceDouble: FfiConverterRustBuffer<List<kotlin.Double>> {
-    override fun read(buf: ByteBuffer): List<kotlin.Double> {
+public object FfiConverterSequenceDouble: FfiConverterRustBuffer<List<Double>> {
+    override fun read(buf: ByteBuffer): List<Double> {
         val len = buf.getInt()
-        return List<kotlin.Double>(len) {
+        return List<Double>(len) {
             FfiConverterDouble.read(buf)
         }
     }
 
-    override fun allocationSize(value: List<kotlin.Double>): ULong {
+    override fun allocationSize(value: List<Double>): ULong {
         val sizeForLength = 4UL
         val sizeForItems = value.map { FfiConverterDouble.allocationSize(it) }.sum()
         return sizeForLength + sizeForItems
     }
 
-    override fun write(value: List<kotlin.Double>, buf: ByteBuffer) {
+    override fun write(value: List<Double>, buf: ByteBuffer) {
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterDouble.write(it, buf)

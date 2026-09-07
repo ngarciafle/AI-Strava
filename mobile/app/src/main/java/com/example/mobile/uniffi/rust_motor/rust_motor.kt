@@ -675,6 +675,8 @@ internal object IntegrityCheckingUniffiLib {
     }
     external fun uniffi_rust_motor_checksum_method_training_end_training(
     ): Int
+    external fun uniffi_rust_motor_checksum_method_training_register_lap(
+    ): Int
     external fun uniffi_rust_motor_checksum_method_training_register_new_point(
     ): Int
     external fun uniffi_rust_motor_checksum_constructor_training_new(
@@ -709,7 +711,9 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_rust_motor_fn_method_training_end_training(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_rust_motor_fn_method_training_register_new_point(`ptr`: Long,`latitude`: Double,`longitude`: Double,`altitude`: Double,`time`: Double,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_rust_motor_fn_method_training_register_lap(`ptr`: Long,`distanceLap`: Double,`timeLap`: Double,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_rust_motor_fn_method_training_register_new_point(`ptr`: Long,`latitude`: Double,`longitude`: Double,`altitude`: Double,`time`: Double,`timeLap`: Double,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_rust_motor_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -833,7 +837,10 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_rust_motor_checksum_method_training_end_training() != 23267) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_rust_motor_checksum_method_training_register_new_point() != 19057) {
+    if (lib.uniffi_rust_motor_checksum_method_training_register_lap() != 48797) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_rust_motor_checksum_method_training_register_new_point() != 58450) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_rust_motor_checksum_constructor_training_new() != 18061) {
@@ -1416,7 +1423,9 @@ public interface TrainingInterface {
     
     fun `endTraining`()
     
-    fun `registerNewPoint`(`latitude`: kotlin.Double, `longitude`: kotlin.Double, `altitude`: kotlin.Double, `time`: kotlin.Double): StatsTraining
+    fun `registerLap`(`distanceLap`: kotlin.Double, `timeLap`: kotlin.Double)
+    
+    fun `registerNewPoint`(`latitude`: kotlin.Double, `longitude`: kotlin.Double, `altitude`: kotlin.Double, `time`: kotlin.Double, `timeLap`: kotlin.Double): StatsTraining
     
     companion object
 }
@@ -1542,7 +1551,21 @@ open class Training: Disposable, AutoCloseable, TrainingInterface
     
     
 
-    override fun `registerNewPoint`(`latitude`: kotlin.Double, `longitude`: kotlin.Double, `altitude`: kotlin.Double, `time`: kotlin.Double): StatsTraining {
+    override fun `registerLap`(`distanceLap`: kotlin.Double, `timeLap`: kotlin.Double)
+        = 
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_rust_motor_fn_method_training_register_lap(
+        it,
+        
+        FfiConverterDouble.lower(`distanceLap`),
+        FfiConverterDouble.lower(`timeLap`),_status)
+}
+    }
+    
+    
+
+    override fun `registerNewPoint`(`latitude`: kotlin.Double, `longitude`: kotlin.Double, `altitude`: kotlin.Double, `time`: kotlin.Double, `timeLap`: kotlin.Double): StatsTraining {
             return FfiConverterTypeStatsTraining.lift(
     callWithHandle {
     uniffiRustCall() { _status ->
@@ -1552,7 +1575,8 @@ open class Training: Disposable, AutoCloseable, TrainingInterface
         FfiConverterDouble.lower(`latitude`),
         FfiConverterDouble.lower(`longitude`),
         FfiConverterDouble.lower(`altitude`),
-        FfiConverterDouble.lower(`time`),_status)
+        FfiConverterDouble.lower(`time`),
+        FfiConverterDouble.lower(`timeLap`),_status)
 }
     }
     )
@@ -1602,6 +1626,8 @@ public object FfiConverterTypeTraining: FfiConverter<Training, Long> {
 data class StatsTraining (
     var `distance`: kotlin.Double
     , 
+    var `distanceLap`: kotlin.Double
+    , 
     var `elevationGain`: kotlin.Double
     , 
     var `elevationLoss`: kotlin.Double
@@ -1610,7 +1636,11 @@ data class StatsTraining (
     , 
     var `time`: kotlin.Double
     , 
+    var `timeLap`: kotlin.Double
+    , 
     var `rithms`: List<kotlin.Double>
+    , 
+    var `times`: List<kotlin.Double>
     
 ){
     
@@ -1632,26 +1662,35 @@ public object FfiConverterTypeStatsTraining: FfiConverterRustBuffer<StatsTrainin
             FfiConverterDouble.read(buf),
             FfiConverterDouble.read(buf),
             FfiConverterDouble.read(buf),
+            FfiConverterDouble.read(buf),
+            FfiConverterDouble.read(buf),
+            FfiConverterSequenceDouble.read(buf),
             FfiConverterSequenceDouble.read(buf),
         )
     }
 
     override fun allocationSize(value: StatsTraining) = (
             FfiConverterDouble.allocationSize(value.`distance`) +
+            FfiConverterDouble.allocationSize(value.`distanceLap`) +
             FfiConverterDouble.allocationSize(value.`elevationGain`) +
             FfiConverterDouble.allocationSize(value.`elevationLoss`) +
             FfiConverterDouble.allocationSize(value.`rithm`) +
             FfiConverterDouble.allocationSize(value.`time`) +
-            FfiConverterSequenceDouble.allocationSize(value.`rithms`)
+            FfiConverterDouble.allocationSize(value.`timeLap`) +
+            FfiConverterSequenceDouble.allocationSize(value.`rithms`) +
+            FfiConverterSequenceDouble.allocationSize(value.`times`)
     )
 
     override fun write(value: StatsTraining, buf: ByteBuffer) {
             FfiConverterDouble.write(value.`distance`, buf)
+            FfiConverterDouble.write(value.`distanceLap`, buf)
             FfiConverterDouble.write(value.`elevationGain`, buf)
             FfiConverterDouble.write(value.`elevationLoss`, buf)
             FfiConverterDouble.write(value.`rithm`, buf)
             FfiConverterDouble.write(value.`time`, buf)
+            FfiConverterDouble.write(value.`timeLap`, buf)
             FfiConverterSequenceDouble.write(value.`rithms`, buf)
+            FfiConverterSequenceDouble.write(value.`times`, buf)
     }
 }
 

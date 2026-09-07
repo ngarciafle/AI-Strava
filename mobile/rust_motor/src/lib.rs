@@ -15,21 +15,27 @@ struct Point {
 #[derive(uniffi::Record)]
 struct StatsTraining {
     distance: f64,
+    distanceLap: f64,
     elevation_gain: f64,
     elevation_loss: f64,
     rithm: f64,
     time: f64,
+    timeLap: f64,
     rithms: Vec<f64>,
+    times: Vec<f64>,
 }
 
 struct TrainingState {
     vec_points: Vec<Point>,
     distance: f64,
+    distanceLap: f64,
     elevation_gain: f64,
     elevation_loss: f64,
     rithm: f64,
     time: f64,
+    timeLap: f64,
     rithms: Vec<f64>,
+    times: Vec<f64>,
 }
 
 #[derive(uniffi::Object)]
@@ -79,16 +85,19 @@ impl Training {
             state: Mutex::new(TrainingState {
                 vec_points: Vec::new(),
                 distance: 0.0,
+                distanceLap: 0.0,
                 elevation_gain: 0.0,
                 elevation_loss: 0.0,
                 rithm: 0.0,
                 time: 0.0,
+                timeLap: 0.0,
                 rithms: Vec::new(),
+                times: Vec::new(),
             })
         }
     }
 
-    pub fn register_new_point(&self, latitude: f64, longitude: f64, altitude: f64, time: f64) -> StatsTraining {
+    pub fn register_new_point(&self, latitude: f64, longitude: f64, altitude: f64, time: f64, timeLap: f64) -> StatsTraining {
         let mut state = self.state.lock().unwrap();
         
         let last_point = match state.vec_points.last() {
@@ -111,6 +120,7 @@ impl Training {
                 longitude,
             );    
             state.distance += distance;
+            state.distanceLap += distance;
 
             (state.elevation_gain, state.elevation_loss) = Self::calc_elevation_gain_loss(
                 last_alt,
@@ -120,33 +130,52 @@ impl Training {
         
 
         
-        let rithm = if state.distance < 5.0 {
+        let rithm = if state.distanceLap == 0.0 {
             0.0
         } else {
-            time * 60.0 / state.distance // time in minutes per km
+            time * 60.0 / state.distanceLap // time in minutes per km
         };
         state.rithm = rithm;
         state.time = time;
+        state.timeLap = timeLap;
 
-        // Its not well implemented -> need to create a vec of distances or sth to calc rithms every km or zone
-        if state.distance % 10.0 == 0.0 || state.rithms.is_empty() {
-            state.rithms.push(rithm);
-        } else {
-            if let Some(last) = state.rithms.last_mut() {
-                *last = rithm;
-            }
-        }
+        // if state.distance % 10.0 == 0.0 || state.rithms.is_empty() {
+        //     state.rithms.push(rithm);
+        //     state.times.push(timeLap);
+        //     state.timeLap = 0.0;
+        // } else {
+        //     if let Some(last) = state.rithms.last_mut() {
+        //         *last = rithm;
+        //     }
+        // }
 
         println!("New point received: {}, {}", latitude, longitude);
 
         StatsTraining {
             distance: state.distance,
+            distanceLap: state.distanceLap,
             elevation_gain: state.elevation_gain,
             elevation_loss: state.elevation_loss,
             rithm: state.rithm,
             time: state.time,
+            timeLap: state.timeLap,
             rithms: state.rithms.clone(),
+            times: state.times.clone(),
         }
+    }
+
+    pub fn register_lap(&self, distanceLap: f64, timeLap: f64) {
+        let mut state = self.state.lock().unwrap();
+        let rithm = if distanceLap == 0.0 {
+            return;
+        } else {
+            timeLap * 60.0 / distanceLap 
+        };
+        state.rithms.push(rithm);
+        state.times.push(timeLap);
+        state.distanceLap = 0.0;
+        state.timeLap = 0.0;
+
     }
     
     pub fn end_training(&self) {
