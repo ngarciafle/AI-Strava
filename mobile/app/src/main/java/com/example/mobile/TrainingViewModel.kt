@@ -78,21 +78,23 @@ class TrainingViewModel: ViewModel() {
         val newStats = motorRust.registerNewPoint(lat, lon, alt, timeInSeconds.doubleValue, timeLapInSeconds.doubleValue)
 
         val currentLapDistance = newStats.distance - lapStartDistance
-        val timeLap = SystemClock.elapsedRealtime() - lapStartTime
 
         if (currentLapDistance >= 1000.0) {
-            triggerLap(currentLapDistance, timeLap.toDouble())
+            triggerLap()
         }
 
         _stats.value = newStats
     }
 
-    fun triggerLap(dist: Double, time: Double) {
+    fun triggerLap() {
+        val currentLapDistance = _stats.value.distance - lapStartDistance
+        val timeLap = SystemClock.elapsedRealtime() - lapStartTime
+
         lapStartTime = SystemClock.elapsedRealtime()
         timeLapInSeconds.doubleValue = 0.0
         lapStartDistance = _stats.value.distance
 
-        motorRust.registerLap(time, dist)
+        motorRust.registerLap(timeLap.toDouble(), currentLapDistance)
     }
 
     fun endTraining() {
@@ -100,6 +102,9 @@ class TrainingViewModel: ViewModel() {
 
         accumulatedTime = 0
         timeInSeconds.doubleValue = 0.0
+        timeLapInSeconds.doubleValue = 0.0
+        accumulatedTimeLap = 0
+
         motorRust.endTraining()
     }
 }

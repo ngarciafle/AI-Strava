@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -191,23 +192,51 @@ fun StartGPS(isActive: Boolean, isPaused: Boolean, endTraining: () -> Unit, stop
 
 
     if (isActive && !isPaused) {
-        Button(
-            onClick = {
-                stopActivity(); newTraining.stop()
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
+        Row() {
+            Button(
+                onClick = {
+                    stopActivity(); newTraining.stop()
+                },
+                modifier = Modifier
+                    .weight(0.4f)
+                    .padding(10.dp, 0.dp, 4.dp, 0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
 
-            Row() {
-                Icon(
-                    Icons.Rounded.Pause, "Pause"
-                )
-                Text(
-                    "Pause"
-                )
+                Row() {
+                    Icon(
+                        Icons.Rounded.Pause, "Pause"
+                    )
+                    Text(
+                        "Pause"
+                    )
+                }
+            }
+            Button(
+                onClick = {
+                    newTraining.registerLap()
+                },
+                modifier = Modifier
+                    .weight(0.4f)
+                    .padding(10.dp, 0.dp, 4.dp, 0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.background
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+
+                Row() {
+                    Icon(
+                        Icons.Rounded.Flag, "Lap"
+                    )
+                    Text(
+                        "Lap"
+                    )
+                }
             }
         }
     } else if (!isPaused) {
@@ -314,6 +343,10 @@ class ControlGPS(context: Context, private val viewModel: TrainingViewModel) {
     fun stop() {
         viewModel.pauseTimer()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
+    fun registerLap() {
+        viewModel.triggerLap()
     }
 
 }
