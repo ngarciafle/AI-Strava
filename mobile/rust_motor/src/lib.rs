@@ -133,7 +133,7 @@ impl Training {
         let rithm = if state.distanceLap == 0.0 {
             0.0
         } else {
-            time * 60.0 / state.distanceLap // time in minutes per km
+            time / state.distanceLap / 60.0 // time in minutes per km
         };
         state.rithm = rithm;
         state.time = time;
@@ -169,7 +169,7 @@ impl Training {
         let rithm = if distanceLap == 0.0 {
             return;
         } else {
-            timeLap * 60.0 / distanceLap 
+            timeLap / distanceLap / 60.0
         };
         state.rithms.push(rithm);
         state.times.push(timeLap);
