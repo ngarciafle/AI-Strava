@@ -38,11 +38,15 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
     let time_minutes = payload.get("time_minutes");
     let user_id = payload.get("user_id");
     let rithms: Vec<String> = payload.get("rithms");
+    // NEW
+    let times: Vec<f32> = payload.get("times");
+    let elevation_gain = payload.get("elevation_gain");
+    let elevation_loss = payload.get("elevation_loss");
     // Route needs more work
 
     pool.execute(
-        "INSERT INTO trainings (distance_km, time_minutes, user_id, rithms) VALUES ($1, $2, $3, $4)",
-        &[&distance_km, &time_minutes, &user_id, &rithms],
+        "INSERT INTO trainings (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        &[&distance_km, &time_minutes, &user_id, &rithms, &times, &elevation_gain, &elevation_loss],
     );
     
     "Post Activity"
