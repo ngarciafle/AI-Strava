@@ -9,6 +9,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import android.os.SystemClock
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.serialization.Serializable
 
 class TrainingViewModel: ViewModel() {
     private val motorRust = Training()
@@ -97,8 +105,24 @@ class TrainingViewModel: ViewModel() {
         motorRust.registerLap(timeLap.toDouble(), currentLapDistance)
     }
 
+    @Serializable
+    data class StatsTrainingDTO(
+        val distance: Double,
+        val time: Double,
+        val rithm: Double,
+        val elevationGain: Double,
+        val elevationLoss: Double,
+        val rithms: List<Double>,
+        val times: List<Double>,
+        // FORM INFO
+        //val name: String,
+        //val notes: String,
+    )
+
     fun endTraining() {
         timerJob?.cancel()
+
+        sendDataActivity()
 
         accumulatedTime = 0
         timeInSeconds.doubleValue = 0.0
@@ -106,5 +130,40 @@ class TrainingViewModel: ViewModel() {
         accumulatedTimeLap = 0
 
         motorRust.endTraining()
+    }
+
+    fun sendDataActivity() {
+        val client = HttpClient(CIO) {
+
+        }
+
+        viewModelScope.launch {
+            try {
+                val payload = toDTO()
+                // The url should be added after running ngrok
+                val response: HttpResponse = client.post("") {
+                    contentType(ContentType.Application.Json)
+                    setBody(payload)
+                }
+            } catch (e: Exception) {
+                print("Error: ${e}")
+                client.close()
+                // Should add sth to not erase data ?? maybe a boolean
+            }
+        }
+
+        client.close()
+    }
+
+    fun toDTO(): StatsTrainingDTO {
+        return StatsTrainingDTO(
+            distance = _stats.value.distance,
+            time = _stats.value.time,
+            rithm = _stats.value.rithm,
+            elevationGain = _stats.value.elevationGain,
+            elevationLoss = _stats.value.elevationLoss,
+            rithms = _stats.value.rithms,
+            times = _stats.value.times,
+        )
     }
 }

@@ -51,6 +51,10 @@ fun MobileApp() {
         currentDestination = AppDestinations.HOME
     }
 
+    fun formActivity() {
+        // **
+    }
+
     if (currentDestination == AppDestinations.RECORD) {
         TrainingScreen(returnHome = { returnHome() })
 

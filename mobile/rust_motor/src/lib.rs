@@ -180,6 +180,20 @@ impl Training {
     
     pub fn end_training(&self) {
         // send results to db
+        // maybe send final data to kotlin?? 
+        // kotlin sends the http to backend
 
+        // RESET STATE
+        let mut state = self.state.lock().unwrap();
+        state.vec_points.clear();
+        state.distance = 0.0;
+        state.distanceLap = 0.0;
+        state.elevation_gain = 0.0;
+        state.elevation_loss = 0.0;
+        state.rithm = 0.0;
+        state.time = 0.0;
+        state.timeLap = 0.0;
+        state.rithms.clear();
+        state.times.clear();
     }
 }

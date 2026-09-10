@@ -60,6 +60,7 @@ async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'stat
     // No verification for now
 
     let activities = pool.fetch_all(
+        // Should select just the necessary fields but for now just select all
         "SELECT * FROM trainings WHERE user_id = $1",
         &[&user_id] 
     ).await;

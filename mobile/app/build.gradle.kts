@@ -68,6 +68,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("net.java.dev.jna:jna:5.19.1@aar")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    implementation("io.ktor:ktor-client-core:3.5.2")
+    implementation("io.ktor:ktor-client-cio:3.5.2")
 
 }
 
