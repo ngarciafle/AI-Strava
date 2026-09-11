@@ -6,8 +6,15 @@ use std::env;
 // Still not sure but nice idea
 #[derive(Deserialize)]
 struct TrainingData {
-    distance_km: f32,
-    time_minutes: f32,
+    // Implementation later w/ special library for geo points
+    // vec_points: Vec<Point>,
+    distance: f64,
+    elevation_gain: f64,
+    elevation_loss: f64,
+    rithm: f64,
+    time: f64,
+    rithms: Vec<f64>,
+    times: Vec<f64>,
 }
 
 #[tokio::main]
@@ -42,17 +49,37 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
         .and_then(|value| serde_json::from_value(value.clone()).ok())
         .unwrap_or_default();
     // NEW
-    let times: Vec<f32> = payload
+    let times: Vec<f64> = payload
         .get("times")
         .and_then(|value| serde_json::from_value(value.clone()).ok())
         .unwrap_or_default();
-    let elevation_gain = payload.get("elevationGain");
-    let elevation_loss = payload.get("elevationLoss");
+    let elevation_gain = payload.get("elevation_gain");
+    let elevation_loss = payload.get("elevation_loss");
 
-    pool.execute(
-        "INSERT INTO trainings (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-        &[&distance_km, &time_minutes, &user_id, &rithms, &times, &elevation_gain, &elevation_loss],
-    );
+    // pool.execute(
+    //     "INSERT INTO trainings (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+    //     &[&distance_km, &time_minutes, &user_id, &rithms, &times, &elevation_gain, &elevation_loss],
+    // );
+
+    let result = sqlx::query!(
+        r#"INSERT INTO trainings (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        returning id"#,
+        &distance_km, &time_minutes, &user_id, &rithms, &times, &elevation_gain, &elevation_loss,
+
+    )
+    .fetch_one(&pool) 
+    .await;
+
+    match result {
+        Ok(row) => {
+            let id: i32 = row.id;
+            println!("Inserted training with ID: {}", id);
+        }
+        Err(e) => {
+            eprintln!("Failed to insert training: {}", e);
+        }
+    }
     
     "Post Activity"
 
@@ -66,11 +93,18 @@ async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'stat
     // No verification for now
     let offset = header.get("offset");
 
-    let activities = pool.fetch_all(
-        // Should select just the necessary fields but for now just select all
-        "SELECT (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) FROM trainings WHERE user_id = $1",
-        &[&user_id] 
-    ).await;
+    // let activities = pool.fetch_all(
+    //     "SELECT (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) FROM trainings WHERE user_id = $1",
+    //     &[&user_id] 
+    // ).await;
+
+    let activities = sqlx::query_as!(
+        TrainingData,
+        "SELECT * FROM trainings WHERE user_id = $1",
+        user_id
+    )
+    .fetch_all(&pool)
+    .await;
 
     match activities {
         Ok(activities) =>  {
