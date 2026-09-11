@@ -21,3 +21,4 @@ local.properties
 backend/.env
 /backend/target
 /backend/target
+/backend/target

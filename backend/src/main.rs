@@ -1,6 +1,6 @@
-use axum::{Router, routing::{get, post}, Json, http::HeaderMap};
+use axum::{Router, routing::{get, post}, Json, http::HeaderMap, extract::State};
 use serde::Deserialize;
-use sqlx::postgres::{PgPool, PgPoolOptions};
+use sqlx::{postgres::{PgPool, PgPoolOptions}, Executor};
 use std::env;
 
 // Still not sure but nice idea
@@ -32,14 +32,20 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-
+#[axum::debug_handler]
 async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(payload): Json<serde_json::Value>) -> &'static str {
     let distance_km = payload.get("distance");
     let time_minutes = payload.get("time");
     let user_id = payload.get("user_id");
-    let rithms: Vec<String> = payload.get("rithms");
+    let rithms: Vec<String> = payload
+        .get("rithms")
+        .and_then(|value| serde_json::from_value(value.clone()).ok())
+        .unwrap_or_default();
     // NEW
-    let times: Vec<f32> = payload.get("times");
+    let times: Vec<f32> = payload
+        .get("times")
+        .and_then(|value| serde_json::from_value(value.clone()).ok())
+        .unwrap_or_default();
     let elevation_gain = payload.get("elevationGain");
     let elevation_loss = payload.get("elevationLoss");
 
@@ -53,10 +59,12 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
 
 }
 
+#[axum::debug_handler]
 async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'static str {
-    // No public search for now
+    // SHOULD ADD SOME SECURITY 
     let user_id = header.get("user_id");
     // No verification for now
+    let offset = header.get("offset");
 
     let activities = pool.fetch_all(
         // Should select just the necessary fields but for now just select all
