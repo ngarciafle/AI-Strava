@@ -34,15 +34,14 @@ async fn main() {
 
 
 async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(payload): Json<serde_json::Value>) -> &'static str {
-    let distance_km = payload.get("distance_km");
-    let time_minutes = payload.get("time_minutes");
+    let distance_km = payload.get("distance");
+    let time_minutes = payload.get("time");
     let user_id = payload.get("user_id");
     let rithms: Vec<String> = payload.get("rithms");
     // NEW
     let times: Vec<f32> = payload.get("times");
-    let elevation_gain = payload.get("elevation_gain");
-    let elevation_loss = payload.get("elevation_loss");
-    // Route needs more work
+    let elevation_gain = payload.get("elevationGain");
+    let elevation_loss = payload.get("elevationLoss");
 
     pool.execute(
         "INSERT INTO trainings (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) VALUES ($1, $2, $3, $4, $5, $6, $7)",
@@ -61,17 +60,17 @@ async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'stat
 
     let activities = pool.fetch_all(
         // Should select just the necessary fields but for now just select all
-        "SELECT * FROM trainings WHERE user_id = $1",
+        "SELECT (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) FROM trainings WHERE user_id = $1",
         &[&user_id] 
     ).await;
 
-    return activities {
+    match activities {
         Ok(activities) =>  {
             // Return activities as JSON
             let activities_json = serde_json::to_string(&activities).unwrap();
             activities_json.as_str()
         },
         Err(_) =>  "Failed to fetch activities"
-    };
+    }
 
 }
