@@ -62,7 +62,7 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
     // );
 
     let result = sqlx::query!(
-        r#"INSERT INTO trainings (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) 
+        r#"INSERT INTO races (distance, time, runner_id, rithms, times, elevation_gain, elevation_loss) 
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         returning id"#,
         &distance_km, &time_minutes, &user_id, &rithms, &times, &elevation_gain, &elevation_loss,
@@ -89,7 +89,7 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
 #[axum::debug_handler]
 async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'static str {
     // SHOULD ADD SOME SECURITY 
-    let user_id = header.get("user_id");
+    let runner_id = header.get("runner_id");
     // No verification for now
     let offset = header.get("offset");
 
@@ -100,8 +100,8 @@ async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'stat
 
     let activities = sqlx::query_as!(
         TrainingData,
-        "SELECT * FROM trainings WHERE user_id = $1",
-        user_id
+        "SELECT * FROM races WHERE runner_id = $1",
+        runner_id
     )
     .fetch_all(&pool)
     .await;
