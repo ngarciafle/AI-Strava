@@ -18,5 +18,5 @@ CREATE TABLE IF NOT EXISTS races (
     elevation_gain double precision NOT NULL,
     elevation_loss double precision NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    runner_id INT REFERENCES runners(id)
+    runner_id INT REFERENCES runners(id) NOT NULL
 );

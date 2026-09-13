@@ -1,10 +1,10 @@
-use axum::{Router, routing::{get, post}, Json, http::HeaderMap, extract::State};
-use serde::Deserialize;
+use axum::{Router, routing::{get, post}, Json, http::HeaderMap, extract::State, http::StatusCode};
+use serde::{Deserialize, Serialize};
 use sqlx::{postgres::{PgPool, PgPoolOptions}, Executor};
 use std::env;
 
 // Still not sure but nice idea
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct TrainingData {
     // Implementation later w/ special library for geo points
     // vec_points: Vec<Point>,
@@ -15,6 +15,7 @@ struct TrainingData {
     time: f64,
     rithms: Vec<f64>,
     times: Vec<f64>,
+    runner_id: i32,
 }
 
 #[tokio::main]
@@ -41,10 +42,11 @@ async fn main() {
 
 #[axum::debug_handler]
 async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(payload): Json<serde_json::Value>) -> &'static str {
-    let distance_km = payload.get("distance");
-    let time_minutes = payload.get("time");
-    let user_id = payload.get("user_id");
-    let rithms: Vec<String> = payload
+    let distance_km = payload.get("distance").and_then(|value| value.as_f64()).unwrap_or(0.0);
+    let time_minutes = payload.get("time").and_then(|value| value.as_f64()).unwrap_or(0.0);
+    let user_id = payload.get("user_id").and_then(|value| value.as_i64()).unwrap_or(0) as i32;
+    let rithm = payload.get("rithm").and_then(|value| value.as_f64()).unwrap_or(0.0);
+    let rithms: Vec<f64> = payload
         .get("rithms")
         .and_then(|value| serde_json::from_value(value.clone()).ok())
         .unwrap_or_default();
@@ -53,8 +55,8 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
         .get("times")
         .and_then(|value| serde_json::from_value(value.clone()).ok())
         .unwrap_or_default();
-    let elevation_gain = payload.get("elevation_gain");
-    let elevation_loss = payload.get("elevation_loss");
+    let elevation_gain = payload.get("elevation_gain").and_then(|value| value.as_f64()).unwrap_or(0.0);
+    let elevation_loss = payload.get("elevation_loss").and_then(|value| value.as_f64()).unwrap_or(0.0);
 
     // pool.execute(
     //     "INSERT INTO trainings (distance_km, time_minutes, user_id, rithms, times, elevation_gain, elevation_loss) VALUES ($1, $2, $3, $4, $5, $6, $7)",
@@ -62,10 +64,10 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
     // );
 
     let result = sqlx::query!(
-        r#"INSERT INTO races (distance, time, runner_id, rithms, times, elevation_gain, elevation_loss) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        r#"INSERT INTO races (distance, time, runner_id, rithm, rithms, times, elevation_gain, elevation_loss) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         returning id"#,
-        &distance_km, &time_minutes, &user_id, &rithms, &times, &elevation_gain, &elevation_loss,
+        &distance_km, &time_minutes, &user_id, &rithm, &rithms, &times, &elevation_gain, &elevation_loss,
 
     )
     .fetch_one(&pool) 
@@ -87,9 +89,9 @@ async fn post_activity(State(pool): State<PgPool>, header: HeaderMap, Json(paylo
 }
 
 #[axum::debug_handler]
-async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'static str {
+async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> Result<Json<Vec<TrainingData>>, StatusCode> {
     // SHOULD ADD SOME SECURITY 
-    let runner_id = header.get("runner_id");
+    let runner_id: i32 = header.get("runner_id").and_then(|value| value.to_str().ok()).and_then(|s| s.parse::<i32>().ok()).unwrap_or(0);
     // No verification for now
     let offset = header.get("offset");
 
@@ -100,19 +102,15 @@ async fn get_activities(State(pool): State<PgPool>, header: HeaderMap) -> &'stat
 
     let activities = sqlx::query_as!(
         TrainingData,
-        "SELECT * FROM races WHERE runner_id = $1",
+        "SELECT distance, time, runner_id, rithm, rithms, times, elevation_gain, elevation_loss FROM races WHERE runner_id = $1",
         runner_id
     )
     .fetch_all(&pool)
     .await;
 
     match activities {
-        Ok(activities) =>  {
-            // Return activities as JSON
-            let activities_json = serde_json::to_string(&activities).unwrap();
-            activities_json.as_str()
-        },
-        Err(_) =>  "Failed to fetch activities"
+        Ok(activities) => Ok(Json(activities)),
+        Err(e) =>  Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
 
 }
